@@ -66,12 +66,27 @@ class BST
 template <class T>
 BSTIterator
 {
-   BSTIterator(BinaryNode <T> * pNode);
-   BSTIterator(Stack <BinaryNode <T> *> nodes);
-   
-   BSTIterator <T> & operator = (const Stack <BinaryNode <T> *> rhs);
-   
-   bool operator == (const BSTIterator <T> & rhs) const;
+   public:
+      BSTIterator(BinaryNode <T> * pNode);
+      BSTIterator(Stack <BinaryNode <T> *> nodes);
+      
+      BSTIterator <T> & operator = (const Stack <BinaryNode <T> *> rhs);
+      
+      bool operator == (const BSTIterator <T> & rhs) const;
+      
+      bool operator != (const BSTIterator <T> & rhs) const;
+      
+      // return const by reference to keep tree valid
+      const T & operator * ()
+      {
+         return nodes.top()->data;
+      }
+      
+      BSTIterator <T> & operator ++ ();
+      BSTIterator <T>   operator ++ (int postfix);
+      
+   private:
+      Stack <BinaryNode <T> *> nodes;
 };
  
 /**************************************************
