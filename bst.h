@@ -11,6 +11,13 @@
 #ifndef BST_H
 #define BST_H
 
+#include "bnode.h"   // for BinaryNode
+#include "stack.h"   // for Stack
+
+/***********************************************
+ * BINARY SEARCH TREE
+ * A binary tree that follows the rule pLeft < root < pRight
+ **********************************************/
 template <class T>
 class BST
 {
@@ -49,11 +56,24 @@ class BST
       BSTIterator <T> rend() { return BSTIterator <T> (NULL); }
       
    private:
-      BinaryNode <T> * root;
-      
-         
+      BinaryNode <T> * root; 
 };
 
+/***********************************************
+ * BST ITERATOR
+ * A class to iterate through the BST
+ **********************************************/
+template <class T>
+BSTIterator
+{
+   BSTIterator(BinaryNode <T> * pNode);
+   BSTIterator(Stack <BinaryNode <T> *> nodes);
+   
+   BSTIterator <T> & operator = (const Stack <BinaryNode <T> *> rhs);
+   
+   bool operator == (const BSTIterator <T> & rhs) const;
+};
+ 
 /**************************************************
  * BST ITERATOR :: DECREMENT PREFIX
  *     advance by one. Note that this implementation uses
