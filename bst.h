@@ -79,7 +79,7 @@ BSTIterator
       // return const by reference to keep tree valid
       const T & operator * ()
       {
-         return nodes.top()->data;
+         return nodes.top();
       }
       
       BSTIterator <T> & operator ++ ();
