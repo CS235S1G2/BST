@@ -27,8 +27,7 @@ class BST
       BST(const BST <T> & rhs) throw (const char *);
       ~BST()
       {
-         deleteBinaryTree(root);
-         root = NULL;
+         clear();
       }
       BST <T> & operator = (const BST <T> & rhs);
       
