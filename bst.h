@@ -35,7 +35,7 @@ class BST
       }
       BST <T> & operator = (const BST <T> & rhs) throw (const char *);
       
-      // make a friend
+      // make a friend -- cannot use the same template class as the class definition
       template <class Y>
       friend void deleteBinaryTree(BinaryNode <Y> * &pNode);
       
@@ -69,7 +69,10 @@ class BST
       void copyBinaryTree(BinaryNode <T> * & pNode, const BinaryNode <T> * rhs)
       {
          if (rhs == NULL)
+         {
             pNode = NULL;
+            return;
+         }
          try
          {
             pNode = new BinaryNode <T>;
@@ -126,6 +129,7 @@ void BST <T> :: insert(const T & t) throw (const char *)
       try
       {
          root = new BinaryNode <T>(t);
+         return;
       }
       catch (std::bad_alloc)
       {
