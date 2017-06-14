@@ -136,44 +136,33 @@ void BST <T> :: insert(const T & t) throw (const char *)
          throw "ERROR: Unable to allocate a node";
       }
    }
-   else
+   
+   BinaryNode <T> * pPrev;
+   BinaryNode <T> * pCurrent = root;
+   while (pCurrent != NULL)
    {
-      BinaryNode <T> * pNode = NULL;
-      try
-      {
-         pNode = new BinaryNode <T>(t);
-      }
-      catch (std::bad_alloc)
-      {
-         throw "ERROR: Unable to allocate a node";
-      }
-      BinaryNode <T> * pCurrent = root; 
-	  assert(pNode!=NULL);
-	  assert(pNode->data != NULL);
-	  assert(pCurrent != NULL);
-      // WHILE place not found
-      bool isFound = false;
-      while (!isFound)
-      {
-         // compare & traverse
-         if (pNode->data > pCurrent->data)
-         {
-            if (pCurrent->pRight == NULL)
-            {
-               pCurrent->addRight(pNode);
-               isFound = true;
-            }
-         }
-         else
-         {
-            if (pCurrent->pLeft == NULL)
-            {
-               pCurrent->addLeft(pNode);
-               isFound = true;
-            }
-         }
-      }
+      // save your spot
+      pPrev = pCurrent;
+      if (t > pCurrent->data)
+         pCurrent = pCurrent->pRight;
+      else
+         pCurrent = pCurrent->pLeft;
    }
+   try
+   {
+      pCurrent = new BinaryNode <T>(t);
+      pCurrent->pParent = pPrev;
+      if (pCurrent->data > pPrev->data)
+         pPrev->pRight = pCurrent;
+      else
+         pPrev->pLeft = pCurrent;
+   }
+   catch(std::bad_alloc)
+   {
+      throw "ERROR: Unable to allocate node";
+   }
+   
+
 }
 
 /***********************************************
