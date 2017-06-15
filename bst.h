@@ -85,6 +85,8 @@ class BST
             throw "ERROR: Unable to allocate a node";
          }
       }
+      
+      void deleteNode(BinaryNode <T> * & pDelete, bool toRight);
 };
 
 /***********************************************
@@ -165,14 +167,88 @@ void BST <T> :: insert(const T & t) throw (const char *)
 
 }
 
-/***********************************************
- * BST :: REMOVE
- * Remove a value from the tree
- **********************************************/
+/*************************************************
+* BST :: REMOVE
+* Remove a given node as specified by the iterator
+* CITE: Brother Jones
+************************************************/
 template <class T>
 void BST <T> :: remove(BSTIterator <T> & it)
 {
-   
+   // find the node
+   BinaryNode <T> * pNode = it.getNode();
+   // do nothing if there is nothing to do
+   if (pNode == NULL)
+      return;
+
+   // if there is only one child (right) or no children (how sad!)
+   if (pNode->pLeft == NULL)
+      deleteNode(pNode, true /* goRight */);
+
+   // if there is only one child (left)
+   else if (pNode->pRight == NULL)
+      deleteNode(pNode, false /* goRight */);
+
+   // otherwise, swap places with the in-order successor
+   else
+   {
+      // find the in-order successor
+      BinaryNode <T> * pNodeIOS = pNode->pRight;
+
+      while (pNodeIOS->pLeft != NULL)
+         pNodeIOS = pNodeIOS->pLeft;
+      
+      // copy its data
+      pNode->data = pNodeIOS->data;
+
+      // if there are any children under the in-order successor, fix them
+      assert(pNodeIOS->pLeft == NULL); // there cannot be a left child or
+
+      // I would not be the IOS
+      deleteNode(pNodeIOS, true /*goRight*/);
+
+      // prepare for deletion
+      pNode = pNodeIOS;
+   }
+
+   delete pNode;
+
+}
+
+/****************************************************
+* DELETE NODE
+* Delete a single node (pDelete) from the tree indicated
+* by a node (pDelete).
+* pDelete the node to be deleted
+* toRight should the right branch inherit our place?
+* CITE: Brother Jones
+****************************************************/
+template <class T>
+void BST <T> :: deleteNode(BinaryNode <T> * & pDelete, bool toRight)
+{
+   // shift everything up
+   BinaryNode <T> * pNext = (toRight ? pDelete->pRight : pDelete->pLeft);
+
+   // if we are not the parent, hook ourselves into the existing tree
+   if (pDelete != root)
+   {
+      if (pDelete->pParent->pLeft == pDelete)
+      {
+         pDelete->pParent->pLeft = NULL;
+         pDelete->pParent->addLeft(pNext);
+      }
+      else
+      {
+         pDelete->pParent->pRight = NULL;
+         pDelete->pParent->addRight(pNext);
+      }
+   }
+   // otherwise, the pNext is the new root
+   else
+   {
+      root = pNext;
+      pNext->pParent = NULL;
+   }
 }
 
 /***********************************************
@@ -182,7 +258,21 @@ void BST <T> :: remove(BSTIterator <T> & it)
 template <class T>
 BSTIterator <T> BST <T> :: find(const T & t)
 {
-   return BSTIterator <T> (NULL);
+   BinaryNode <T> * pCurrent = root;
+   while(pCurrent != NULL)
+   {
+      if (t == pCurrent->data)
+         return BSTIterator <T>(pCurrent);
+      else if (t > pCurrent->data)
+      {
+         pCurrent = pCurrent->pRight;
+      }
+      else
+      {
+         pCurrent = pCurrent->pLeft;
+      }
+   }
+   return end();
 }
 
 /***********************************************
@@ -192,17 +282,37 @@ BSTIterator <T> BST <T> :: find(const T & t)
 template <class T>
 BSTIterator <T> BST <T> :: begin()
 {
-   return BSTIterator <T> (NULL); 
+   Stack < BinaryNode <T> * > nodes;
+   
+   // add a NULL
+   nodes.push(NULL);
+   // start the tree
+   nodes.push(root);
+   // find the left-most leaf
+   while(nodes.top() != NULL && nodes.top()->pLeft)
+      nodes.push(nodes.top()->pLeft);
+   
+   return nodes; 
 }
 
 /***********************************************
  * BST :: RBEGIN
- * return a reverse iterator
+ * return the right-most leaf
  **********************************************/
 template <class T>
 BSTIterator <T> BST <T> :: rbegin()
 {
-   return BSTIterator <T> (NULL);
+   Stack < BinaryNode <T> * > nodes;
+   
+   // add a NULL
+   nodes.push(NULL);
+   // start the tree
+   nodes.push(root);
+   // find the left-most leaf
+   while(nodes.top() != NULL && nodes.top()->pRight)
+      nodes.push(nodes.top()->pRight);
+   
+   return nodes; 
 }
 
 
@@ -214,24 +324,43 @@ template <class T>
 class BSTIterator
 {
    public:
+      BSTIterator() {}
       BSTIterator(BinaryNode <T> * pNode);
       BSTIterator(Stack <BinaryNode <T> *> nodes);
       
-      BSTIterator <T> & operator = (const Stack <BinaryNode <T> *> rhs);
+      BSTIterator <T> & operator = (const Stack <BinaryNode <T> *> rhs)
+      {
+         nodes = rhs.nodes;
+         return *this;
+      }
       
       bool operator == (const BSTIterator <T> & rhs) const;
       
       bool operator != (const BSTIterator <T> & rhs) const;
       
       // return const by reference to keep tree valid
-      const T & operator * ()
+      const T & operator * () const
       {
-         return nodes.top();
+         if (!nodes.empty() && nodes.top() != NULL)
+            return nodes.top()->data;
       }
       
       BSTIterator <T> & operator -- ();
+      BSTIterator <T> & operator -- (int postfix)
+      {
+         BSTIterator <T> temp = *this;
+         --(*this);
+         return temp;
+      }
       BSTIterator <T> & operator ++ ();
-      BSTIterator <T>   operator ++ (int postfix);
+      BSTIterator <T>   operator ++ (int postfix)
+      {
+         BSTIterator <T> temp = *this;
+         ++(*this);
+         return temp;
+      }
+      
+      BinaryNode <T> * getNode() { return nodes.top(); }
       
    private:
       Stack <BinaryNode <T> *> nodes;
@@ -240,43 +369,71 @@ class BSTIterator
 template <class T>
 BSTIterator <T> :: BSTIterator(BinaryNode <T> * pNode)
 {
-   
+   nodes.push(pNode);
 }
 
 template <class T>
-BSTIterator <T> :: BSTIterator(Stack <BinaryNode <T> *> nodes)
+BSTIterator <T> :: BSTIterator(Stack <BinaryNode <T> *> rhs)
 {
-   
+   nodes = rhs;
 }
 
-template <class T>
-BSTIterator <T> & BSTIterator <T> :: operator = (const Stack <BinaryNode <T> *> rhs)
-{
-   
-}
 
 template <class T>
 bool BSTIterator <T> :: operator == (const BSTIterator <T> & rhs) const
 {
-   
+   return nodes.top() == rhs.nodes.top();
 }
 
 template <class T>
 bool BSTIterator <T> :: operator != (const BSTIterator <T> & rhs) const
 {
-   
+   return nodes.top() != rhs.nodes.top();
 }
 
+/***********************************************
+ * BST ITERATOR :: INCREMENT PREFIX
+ * advance the iterator
+ **********************************************/
 template <class T>
 BSTIterator <T> & BSTIterator <T> :: operator ++ ()
 {
-   
-}
+   // do nothing if we have nothing
+   if (nodes.top() == NULL)
+      return *this;
 
-template <class T>
-BSTIterator <T> BSTIterator <T> :: operator ++ (int postfix)
-{
-   
+   // if there is a right node, take it
+   if (nodes.top()->pRight != NULL)
+   {
+      nodes.push(nodes.top()->pRight);
+
+      // there might be more left-most children
+      while (nodes.top()->pLeft)
+         nodes.push(nodes.top()->pLeft);
+      return *this;
+   }
+
+   // there are no right children, the left are done
+   assert(nodes.top()->pRight == NULL);
+   BinaryNode <T> * pSave = nodes.top();
+   nodes.pop();
+
+   // if the parent is the NULL, we are done!
+   if (NULL == nodes.top())
+      return *this;
+
+   // if we are the left-child, got to the parent.
+   if (pSave == nodes.top()->pLeft)
+      return *this;
+
+   // we are the right-child, go up as long as we are the right child!
+   while (nodes.top() != NULL && pSave == nodes.top()->pRight)
+   {
+      pSave = nodes.top();
+      nodes.pop();
+   }
+
+   return *this;
 }
       
 /**************************************************
